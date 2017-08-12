@@ -68,6 +68,10 @@
 #ifdef HAVE_SPOTIFY_H
 # include "spotify.h"
 #endif
+#ifdef WEBSOCKET
+# include "websocket.h"
+#endif
+
 
 /*
  * HTTP client quirks by User-Agent, from mt-daapd
@@ -1491,6 +1495,16 @@ httpd_init(void)
       goto jsonapi_fail;
     }
 
+#ifdef WEBSOCKET
+  ret = websocket_init();
+  if (ret < 0)
+    {
+      DPRINTF(E_FATAL, L_HTTPD, "Websocket init failed\n");
+
+      goto websocket_fail;
+    }
+#endif
+
   streaming_init();
 
 #ifdef HAVE_EVENTFD
@@ -1598,6 +1612,10 @@ httpd_init(void)
 #endif
  pipe_fail:
   streaming_deinit();
+#ifdef WEBSOCKET
+  websocket_deinit();
+#endif
+ websocket_fail:
   jsonapi_deinit();
  jsonapi_fail:
   dacp_deinit();
@@ -1646,6 +1664,9 @@ httpd_deinit(void)
     }
 
   streaming_deinit();
+#ifdef WEBSOCKET
+  websocket_deinit();
+#endif
   jsonapi_deinit();
   rsp_deinit();
   dacp_deinit();

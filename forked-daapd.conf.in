@@ -24,6 +24,8 @@ general {
 	# Admin password for the web interface
 	admin_password = "unused"
 #	web_root_path = "@localdatadir@/htdocs"
+	# Websocket port for the web interface. Default is 0 (disabled)
+#	websocket_port = 0
 
 	# Enable/disable IPv6
 	ipv6 = yes

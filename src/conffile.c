@@ -47,6 +47,7 @@ static cfg_opt_t sec_general[] =
     CFG_STR("uid", "nobody", CFGF_NONE),
     CFG_STR("admin_password", NULL, CFGF_NONE),
     CFG_STR("web_root_path", DATADIR "/htdocs", CFGF_NONE),
+    CFG_INT("websocket_port", 0, CFGF_NONE),
     CFG_STR("logfile", STATEDIR "/log/" PACKAGE ".log", CFGF_NONE),
     CFG_STR("db_path", STATEDIR "/cache/" PACKAGE "/songs3.db", CFGF_NONE),
     CFG_INT("db_pragma_cache_size", -1, CFGF_NONE),
