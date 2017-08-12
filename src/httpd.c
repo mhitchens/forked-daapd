@@ -88,7 +88,6 @@
 
 
 #define STREAM_CHUNK_SIZE (64 * 1024)
-#define WEBFACE_ROOT   DATADIR "/webface/"
 #define ERR_PAGE "<html>\n<head>\n" \
   "<title>%d %s</title>\n" \
   "</head>\n<body>\n" \
@@ -144,6 +143,8 @@ static pthread_t tid_httpd;
 
 static const char *allow_origin;
 static int httpd_port;
+
+static const char *web_root;
 
 #ifdef HAVE_LIBEVENT2_OLD
 struct stream_ctx *g_st;
@@ -901,7 +902,7 @@ httpd_send_error(struct evhttp_request* req, int error, const char* reason)
 static int
 path_is_legal(char *path)
 {
-  return strncmp(WEBFACE_ROOT, path, strlen(WEBFACE_ROOT));
+  return strncmp(web_root, path, strlen(web_root));
 }
 
 /* Thread: httpd */
@@ -945,6 +946,7 @@ serve_file(struct evhttp_request *req, char *uri)
   struct stat sb;
   int fd;
   int i;
+  uint8_t buf[4096];
   int ret;
 
   /* Check authentication */
@@ -978,7 +980,7 @@ serve_file(struct evhttp_request *req, char *uri)
       return;
     }
 
-  ret = snprintf(path, sizeof(path), "%s%s", WEBFACE_ROOT, uri + 1); /* skip starting '/' */
+  ret = snprintf(path, sizeof(path), "%s%s", web_root, uri);
   if ((ret < 0) || (ret >= sizeof(path)))
     {
       DPRINTF(E_LOG, L_HTTPD, "Request exceeds PATH_MAX: %s\n", uri);
@@ -1069,20 +1071,24 @@ serve_file(struct evhttp_request *req, char *uri)
       DPRINTF(E_LOG, L_HTTPD, "Could not open %s: %s\n", path, strerror(errno));
 
       httpd_send_error(req, HTTP_NOTFOUND, "Not Found");
+      evbuffer_free(evbuf);
       return;
     }
 
-  /* FIXME: this is broken, if we ever need to serve files here,
-   * this must be fixed.
-   */
-  ret = evbuffer_read(evbuf, fd, sb.st_size);
-  close(fd);
+  ret = evbuffer_expand(evbuf, sb.st_size);
+  if (ret < 0)
+    {
+      DPRINTF(E_LOG, L_ART, "Out of memory for artwork\n");
+      goto out_fail;
+    }
+
+  while ((ret = read(fd, buf, sizeof(buf))) > 0)
+    evbuffer_add(evbuf, buf, ret);
+
   if (ret < 0)
     {
       DPRINTF(E_LOG, L_HTTPD, "Could not read file into evbuffer\n");
-
-      httpd_send_error(req, HTTP_SERVUNAVAIL, "Internal error");
-      return;
+      goto out_fail;
     }
 
   ctype = "application/octet-stream";
@@ -1105,6 +1111,13 @@ serve_file(struct evhttp_request *req, char *uri)
   httpd_send_reply(req, HTTP_OK, "OK", evbuf, HTTPD_SEND_NO_GZIP);
 
   evbuffer_free(evbuf);
+  close(fd);
+  return;
+
+ out_fail:
+  httpd_send_error(req, HTTP_SERVUNAVAIL, "Internal error");
+  evbuffer_free(evbuf);
+  close(fd);
 }
 
 /* Thread: httpd */
@@ -1494,6 +1507,7 @@ httpd_init(void)
 
   v6enabled = cfg_getbool(cfg_getsec(cfg, "general"), "ipv6");
   httpd_port = cfg_getint(cfg_getsec(cfg, "library"), "port");
+  web_root = cfg_getstr(cfg_getsec(cfg, "general"), "web_root_path");
 
   // For CORS headers
   allow_origin = cfg_getstr(cfg_getsec(cfg, "general"), "allow_origin");

@@ -21,8 +21,9 @@ general {
 	logfile = "@localstatedir@/log/@PACKAGE@.log"
 	loglevel = log
 
-	# Admin password for the non-existent web interface
+	# Admin password for the web interface
 	admin_password = "unused"
+#	web_root_path = "@localdatadir@/htdocs"
 
 	# Enable/disable IPv6
 	ipv6 = yes
