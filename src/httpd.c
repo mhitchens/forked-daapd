@@ -59,6 +59,7 @@
 #include "httpd_rsp.h"
 #include "httpd_daap.h"
 #include "httpd_dacp.h"
+#include "httpd_jsonapi.h"
 #include "httpd_streaming.h"
 #include "transcode.h"
 #ifdef LASTFM
@@ -1204,6 +1205,12 @@ httpd_gen_cb(struct evhttp_request *req, void *arg)
 
       goto out;
     }
+  else if (jsonapi_is_request(req, uri))
+    {
+      jsonapi_request(req);
+
+      goto out;
+    }
   else if (streaming_is_request(req, uri))
     {
       streaming_request(req);
@@ -1476,6 +1483,14 @@ httpd_init(void)
       goto dacp_fail;
     }
 
+  ret = jsonapi_init();
+  if (ret < 0)
+    {
+      DPRINTF(E_FATAL, L_HTTPD, "JSON api init failed\n");
+
+      goto jsonapi_fail;
+    }
+
   streaming_init();
 
 #ifdef HAVE_EVENTFD
@@ -1583,6 +1598,8 @@ httpd_init(void)
 #endif
  pipe_fail:
   streaming_deinit();
+  jsonapi_deinit();
+ jsonapi_fail:
   dacp_deinit();
  dacp_fail:
   daap_deinit();
@@ -1629,6 +1646,7 @@ httpd_deinit(void)
     }
 
   streaming_deinit();
+  jsonapi_deinit();
   rsp_deinit();
   dacp_deinit();
   daap_deinit();
