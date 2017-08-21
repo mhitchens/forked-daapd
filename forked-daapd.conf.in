@@ -22,7 +22,9 @@ general {
 	loglevel = log
 
 	# Admin password for the web interface
-	admin_password = "unused"
+	# If not set, access to the web interface is only permitted from localhost
+#	admin_password = ""
+	# Path to the web interface
 #	web_root_path = "@localdatadir@/htdocs"
 	# Websocket port for the web interface. Default is 0 (disabled)
 #	websocket_port = 0
