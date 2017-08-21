@@ -611,6 +611,9 @@ main(int argc, char **argv)
 #ifdef RAOP_VERIFICATION
   strcat(buildopts, " --enable-verification");
 #endif
+#ifdef WEBSOCKET
+  strcat(buildopts, " --enable-websocket");
+#endif
 #ifdef HAVE_ALSA
   strcat(buildopts, " --with-alsa");
 #endif
