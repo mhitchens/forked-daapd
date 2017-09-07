@@ -4975,7 +4975,7 @@ int mpd_init(void)
 
 #ifndef __linux__
 	  // Linux will listen on both ipv6 and ipv4, but FreeBSD won't
-	  DPRINTF(E_LOG, L_MPD, "Could not bind HTTP artwork server to port %d with IPv4, listening on IPv6 only\n", httpd_port);
+	  DPRINTF(E_LOG, L_MPD, "Could not bind HTTP artwork server to port %d with IPv4, listening on IPv6 only\n", http_port);
 #endif
 	}
     }
